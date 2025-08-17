@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom vendor app styles */
+.font-rubik-light {
+  font-family: "Rubik_300Light";
+}
+
+.font-rubik-regular {
+  font-family: "Rubik_400Regular";
+}
+
+.font-rubik-medium {
+  font-family: "Rubik_500Medium";
+}
+
+.font-rubik-semibold {
+  font-family: "Rubik_600SemiBold";
+}
+
+.font-rubik-bold {
+  font-family: "Rubik_700Bold";
+}
+
+.font-rubik-extrabold {
+  font-family: "Rubik_800ExtraBold";
+}
+
+.font-rubik-black {
+  font-family: "Rubik_900Black";
+}
