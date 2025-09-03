@@ -1,4 +1,4 @@
-export const API_BASE_URL = "http://192.168.236.202:8000/api";
+export const API_BASE_URL = "http://192.168.14.202:8000/api";
 
 export const API_ENDPOINTS = {
   // Auth endpoints
@@ -16,9 +16,9 @@ export const API_ENDPOINTS = {
   // Vendor endpoints
   VENDOR: {
     PROFILE: `${API_BASE_URL}/auth/me`,
-    UPDATE_PROFILE: `${API_BASE_URL}/auth/vendor/update-profile`,
-    UPLOAD_DOCUMENTS: `${API_BASE_URL}/auth/vendor/upload-documents`,
-    VERIFICATION_STATUS: `${API_BASE_URL}/auth/vendor/verification-status`,
+    UPDATE_PROFILE: `${API_BASE_URL}/auth/vendor/profile`,
+    UPLOAD_DOCUMENTS: `${API_BASE_URL}/auth/vendor/profile`,
+    VERIFICATION_STATUS: `${API_BASE_URL}/auth/me`,
   },
 
   // Business endpoints
@@ -31,7 +31,7 @@ export const API_ENDPOINTS = {
 };
 
 export const UPLOAD_ENDPOINTS = {
-  GHANA_CARD: `${API_BASE_URL}/upload/ghana-card`,
-  BUSINESS_CERTIFICATE: `${API_BASE_URL}/upload/business-certificate`,
-  BUSINESS_LOGO: `${API_BASE_URL}/upload/business-logo`,
+  GHANA_CARD: `${API_BASE_URL}/auth/vendor/profile`,
+  BUSINESS_CERTIFICATE: `${API_BASE_URL}/auth/vendor/profile`,
+  BUSINESS_LOGO: `${API_BASE_URL}/business/upload-logo`,
 };

@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  Alert,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../store/authStore";
 import { Button } from "../../components/ui/Button";
+import { AnalyticsService } from "../../services/analyticsService";
+import { AuthService } from "../../services/authService";
 
 interface DashboardStats {
   totalProducts: number;
@@ -21,7 +24,7 @@ interface DashboardStats {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { vendor, logout } = useAuth();
+  const { vendor, logout, updateVendor } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0,
     totalOrders: 0,
@@ -31,21 +34,29 @@ export default function HomeScreen() {
   });
   const [refreshing, setRefreshing] = useState(false);
 
+  const loadDashboardData = useCallback(async () => {
+    try {
+      // Refresh vendor profile so verification status reflects backend immediately
+      const profile = await AuthService.getProfile();
+      if (profile?.success && profile.data) {
+        updateVendor(profile.data);
+      }
+    } catch {}
+
+    try {
+      const res = await AnalyticsService.getDashboard();
+      if (res?.success && res.data) {
+        setStats(res.data);
+        return;
+      }
+    } catch {
+      // Silent failover to zeros is handled in service
+    }
+  }, [updateVendor]);
+
   useEffect(() => {
     loadDashboardData();
-  }, []);
-
-  const loadDashboardData = async () => {
-    // This would fetch real data from the API
-    // For now, using mock data
-    setStats({
-      totalProducts: 12,
-      totalOrders: 45,
-      pendingOrders: 8,
-      totalRevenue: 12500,
-      monthlyRevenue: 3200,
-    });
-  };
+  }, [loadDashboardData]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -72,6 +83,21 @@ export default function HomeScreen() {
     } else {
       return { status: "unverified", color: "red", text: "Unverified" };
     }
+  };
+
+  const navigateIfVerified = (path: Href) => {
+    if (!vendor?.businessVerified) {
+      Alert.alert(
+        "Complete Setup",
+        "Please complete your business verification before accessing this section.",
+        [
+          { text: "Continue Setup", onPress: () => router.push("/onboarding") },
+          { text: "Cancel", style: "cancel" },
+        ]
+      );
+      return;
+    }
+    router.push(path);
   };
 
   const verificationStatus = getVerificationStatus();
@@ -136,7 +162,7 @@ export default function HomeScreen() {
 
           <View className="flex-row space-x-3">
             <TouchableOpacity
-              onPress={() => router.push("/(dashboard)/products")}
+              onPress={() => navigateIfVerified("/(dashboard)/products")}
               className="flex-1 bg-white p-4 rounded-xl border border-gray-200 items-center"
             >
               <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mb-2">
@@ -148,7 +174,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => router.push("/(dashboard)/orders")}
+              onPress={() => navigateIfVerified("/(dashboard)/orders")}
               className="flex-1 bg-white p-4 rounded-xl border border-gray-200 items-center"
             >
               <View className="w-12 h-12 bg-green-100 rounded-full items-center justify-center mb-2">

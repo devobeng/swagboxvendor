@@ -38,11 +38,14 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { vendor, updateVendor } = useAuth();
+  const { vendor, updateVendor, logout } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [businessLogo, setBusinessLogo] = useState<any>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [ghanaCard, setGhanaCard] = useState<any>(null);
+  const [businessCertificate, setBusinessCertificate] = useState<any>(null);
+  const [isUploadingDocs, setIsUploadingDocs] = useState(false);
 
   const {
     control,
@@ -65,7 +68,17 @@ export default function ProfileScreen() {
       const response = await AuthService.updateProfile(data);
 
       if (response.success) {
-        updateVendor({ businessProfile: data });
+        // Fetch latest profile from backend to avoid stale local data
+        try {
+          const profile = await AuthService.getProfile();
+          if (profile?.success && profile.data) {
+            updateVendor(profile.data);
+          } else {
+            updateVendor({ businessProfile: data });
+          }
+        } catch {
+          updateVendor({ businessProfile: data });
+        }
         setIsEditing(false);
         Alert.alert("Success", "Profile updated successfully");
       } else {
@@ -81,14 +94,49 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleUploadDocuments = async () => {
+    try {
+      setIsUploadingDocs(true);
+      const resp = await AuthService.uploadDocuments({
+        ghanaCard: ghanaCard || undefined,
+        businessCertificate: businessCertificate || undefined,
+      });
+      if (resp.success) {
+        // Refresh vendor profile after successful upload
+        try {
+          const profile = await AuthService.getProfile();
+          if (profile?.success && profile.data) {
+            updateVendor(profile.data);
+          }
+        } catch {}
+        Alert.alert("Success", "Documents uploaded successfully");
+        setGhanaCard(null);
+        setBusinessCertificate(null);
+      } else {
+        console.log(resp);
+        Alert.alert("Error", resp.message || "Failed to upload documents");
+      }
+    } catch (e: any) {
+      Alert.alert(
+        "Error",
+        e?.response?.data?.message || "Failed to upload documents"
+      );
+    } finally {
+      setIsUploadingDocs(false);
+    }
+  };
+
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Logout",
         style: "destructive",
-        onPress: () => {
-          // Handle logout
+        onPress: async () => {
+          try {
+            await AuthService.logout();
+          } catch {}
+          logout();
           router.replace("/(auth)/login");
         },
       },
@@ -309,6 +357,36 @@ export default function ProfileScreen() {
           )}
         </View>
 
+        {/* Business Documents Upload */}
+        <View className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+          <Text className="text-lg font-rubik-semibold text-gray-900 mb-4">
+            Business Documents
+          </Text>
+
+          <DocumentUpload
+            label="Ghana Card / ID (Required)"
+            documentType="both"
+            value={ghanaCard}
+            onChange={setGhanaCard}
+            helperText="Upload a clear image or PDF of your government-issued ID"
+          />
+
+          <DocumentUpload
+            label="Business Certificate (Required)"
+            documentType="both"
+            value={businessCertificate}
+            onChange={setBusinessCertificate}
+            helperText="Upload your business registration certificate"
+          />
+
+          <Button
+            title="Upload Documents"
+            onPress={handleUploadDocuments}
+            loading={isUploadingDocs}
+            className="mt-2"
+          />
+        </View>
+
         {/* Business Logo Upload */}
         <View className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
           <Text className="text-lg font-rubik-semibold text-gray-900 mb-4">
@@ -405,7 +483,10 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
           </TouchableOpacity>
 
-          <TouchableOpacity className="flex-row items-center justify-between py-3">
+          <TouchableOpacity
+            className="flex-row items-center justify-between py-3"
+            onPress={handleLogout}
+          >
             <View className="flex-row items-center">
               <Ionicons
                 name="log-out"

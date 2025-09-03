@@ -101,7 +101,7 @@ export class AuthService {
   static async updateProfile(
     updates: Partial<BusinessProfile>
   ): Promise<{ success: boolean; data: any; message: string }> {
-    const response = await api.put(
+    const response = await api.patch(
       API_ENDPOINTS.VENDOR.UPDATE_PROFILE,
       updates
     );
@@ -118,11 +118,11 @@ export class AuthService {
 
     Object.entries(documents).forEach(([key, file]) => {
       if (file) {
-        formData.append(key, file);
+        formData.append(key, file as any);
       }
     });
 
-    const response = await api.post(
+    const response = await api.patch(
       API_ENDPOINTS.VENDOR.UPLOAD_DOCUMENTS,
       formData,
       {

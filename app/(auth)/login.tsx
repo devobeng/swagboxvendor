@@ -57,6 +57,7 @@ export default function LoginScreen() {
         Alert.alert("Login Failed", response.message);
       }
     } catch (error: any) {
+      console.log(error);
       Alert.alert("Error", error.response?.data?.message || "Login failed");
     } finally {
       setIsLoading(false);

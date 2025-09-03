@@ -38,16 +38,24 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       });
 
       if (!result.canceled && result.assets[0]) {
-        const file = result.assets[0];
+        const asset: any = result.assets[0];
 
         // Check file size
-        if (file.size && file.size > maxSize * 1024 * 1024) {
+        if (asset.size && asset.size > maxSize * 1024 * 1024) {
           Alert.alert(
             "File too large",
             `File size must be less than ${maxSize}MB`
           );
           return;
         }
+
+        // Normalize to React Native FormData file shape
+        const file = {
+          uri: asset.uri,
+          name: asset.name || `file_${Date.now()}`,
+          type: asset.mimeType || asset.type || "application/octet-stream",
+          size: asset.size || 0,
+        };
 
         onChange(file);
       }
@@ -74,9 +82,9 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         // Create a file-like object for consistency
         const file = {
           uri: asset.uri,
-          name: `image_${Date.now()}.jpg`,
+          name: asset.fileName || `image_${Date.now()}.jpg`,
           type: "image/jpeg",
-          size: asset.fileSize || 0,
+          size: (asset as any).fileSize || 0,
         };
 
         onChange(file);
